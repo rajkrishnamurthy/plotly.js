@@ -56,7 +56,7 @@ exports.plot = function plotGl3d(gd) {
                 graphDiv: gd,
                 container: gd.querySelector('.gl-container'),
                 staticPlot: gd._context.staticPlot,
-                plotGlPixelRatio: gd._context.plotGlPixelRatio
+                plotGlPixelRatio: gd._context.plotGlPixelRatio || parseFloat(window.devicePixelRatio)
             },
                 fullLayout
             );
