@@ -51,7 +51,6 @@ proto.handlePick = function(selection) {
     }
 };
 
-var axisName2scaleIndex = {xaxis: 0, yaxis: 1, zaxis: 2};
 var anchor2coneOffset = {tip: 1, tail: 0, cm: 0.25, center: 0.5};
 var anchor2coneSpan = {tip: 1, tail: 1, cm: 0.75, center: 0.5};
 

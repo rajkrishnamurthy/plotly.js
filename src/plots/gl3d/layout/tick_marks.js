@@ -71,8 +71,6 @@ function computeTickMarks(scene) {
             }
             var dataTicks = Axes.calcTicks(axes);
             for(var j = 0; j < dataTicks.length; ++j) {
-                dataTicks[j].x = dataTicks[j].x;
-
                 if(axes.type === 'date') {
                     dataTicks[j].text =
                     dataTicks[j].text.replace(/\<br\>/g, ' ');
