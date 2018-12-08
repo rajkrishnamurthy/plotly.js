@@ -62,16 +62,16 @@ proto.update = function(data) {
     this.data = data;
 
     // Unpack position data
-    function toDataCoords(axis, coord, scale, calendar) {
+    function toDataCoords(axis, coord, calendar) {
         return coord.map(function(x) {
-            return axis.d2l(x, 0, calendar) * scale;
+            return axis.d2l(x, 0, calendar);
         });
     }
 
     var positions = zip3(
-        toDataCoords(layout.xaxis, data.x, scene.dataScale[0], data.xcalendar),
-        toDataCoords(layout.yaxis, data.y, scene.dataScale[1], data.ycalendar),
-        toDataCoords(layout.zaxis, data.z, scene.dataScale[2], data.zcalendar));
+        toDataCoords(layout.xaxis, data.x, data.xcalendar),
+        toDataCoords(layout.yaxis, data.y, data.ycalendar),
+        toDataCoords(layout.zaxis, data.z, data.zcalendar));
 
     var cells;
     if(data.i && data.j && data.k) {

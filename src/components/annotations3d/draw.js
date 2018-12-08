@@ -14,7 +14,6 @@ var axLetters = ['x', 'y', 'z'];
 
 module.exports = function draw(scene) {
     var fullSceneLayout = scene.fullSceneLayout;
-    var dataScale = scene.dataScale;
     var anns = fullSceneLayout.annotations;
 
     for(var i = 0; i < anns.length; i++) {
@@ -39,9 +38,9 @@ module.exports = function draw(scene) {
                 .remove();
         } else {
             ann._pdata = project(scene.glplot.cameraParams, [
-                fullSceneLayout.xaxis.r2l(ann.x) * dataScale[0],
-                fullSceneLayout.yaxis.r2l(ann.y) * dataScale[1],
-                fullSceneLayout.zaxis.r2l(ann.z) * dataScale[2]
+                fullSceneLayout.xaxis.r2l(ann.x),
+                fullSceneLayout.yaxis.r2l(ann.y),
+                fullSceneLayout.zaxis.r2l(ann.z)
             ]);
 
             drawRaw(scene.graphDiv, ann, i, scene.id, ann._xa, ann._ya);

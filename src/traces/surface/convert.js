@@ -27,7 +27,6 @@ function SurfaceTrace(scene, surface, uid) {
     this.surface = surface;
     this.data = null;
     this.showContour = [false, false, false];
-    this.dataScale = 1.0;
 }
 
 var proto = SurfaceTrace.prototype;
@@ -36,11 +35,11 @@ proto.handlePick = function(selection) {
     if(selection.object === this.surface) {
         var selectIndex = selection.index = [
             Math.min(
-                Math.round(selection.data.index[0] / this.dataScale - 1)|0,
+                Math.round(selection.data.index[0] - 1)|0,
                 this.data.z[0].length - 1
             ),
             Math.min(
-                Math.round(selection.data.index[1] / this.dataScale - 1)|0,
+                Math.round(selection.data.index[1] - 1)|0,
                 this.data.z.length - 1
             )
         ];
@@ -67,9 +66,9 @@ proto.handlePick = function(selection) {
 
         var sceneLayout = this.scene.fullSceneLayout;
         selection.dataCoordinate = [
-            sceneLayout.xaxis.d2l(traceCoordinate[0], 0, this.data.xcalendar) * this.scene.dataScale[0],
-            sceneLayout.yaxis.d2l(traceCoordinate[1], 0, this.data.ycalendar) * this.scene.dataScale[1],
-            sceneLayout.zaxis.d2l(traceCoordinate[2], 0, this.data.zcalendar) * this.scene.dataScale[2]
+            sceneLayout.xaxis.d2l(traceCoordinate[0], 0, this.data.xcalendar),
+            sceneLayout.yaxis.d2l(traceCoordinate[1], 0, this.data.ycalendar),
+            sceneLayout.zaxis.d2l(traceCoordinate[2], 0, this.data.zcalendar)
         ];
 
         var text = this.data.text;
@@ -186,7 +185,6 @@ proto.update = function(data) {
         xaxis = sceneLayout.xaxis,
         yaxis = sceneLayout.yaxis,
         zaxis = sceneLayout.zaxis,
-        scaleFactor = scene.dataScale,
         xlen = z[0].length,
         ylen = data._ylength,
         coords = [
@@ -214,38 +212,38 @@ proto.update = function(data) {
         zcalendar = data.zcalendar;
 
     fill(coords[2], function(row, col) {
-        return zaxis.d2l(z[col][row], 0, zcalendar) * scaleFactor[2];
+        return zaxis.d2l(z[col][row], 0, zcalendar);
     });
 
     // coords x
     if(!isArrayOrTypedArray(x)) {
         fill(xc, function(row) {
-            return xaxis.d2l(row, 0, xcalendar) * scaleFactor[0];
+            return xaxis.d2l(row, 0, xcalendar);
         });
     } else if(isArrayOrTypedArray(x[0])) {
         fill(xc, function(row, col) {
-            return xaxis.d2l(x[col][row], 0, xcalendar) * scaleFactor[0];
+            return xaxis.d2l(x[col][row], 0, xcalendar);
         });
     } else {
         // ticks x
         fill(xc, function(row) {
-            return xaxis.d2l(x[row], 0, xcalendar) * scaleFactor[0];
+            return xaxis.d2l(x[row], 0, xcalendar);
         });
     }
 
     // coords y
     if(!isArrayOrTypedArray(x)) {
         fill(yc, function(row, col) {
-            return yaxis.d2l(col, 0, xcalendar) * scaleFactor[1];
+            return yaxis.d2l(col, 0, xcalendar);
         });
     } else if(isArrayOrTypedArray(y[0])) {
         fill(yc, function(row, col) {
-            return yaxis.d2l(y[col][row], 0, ycalendar) * scaleFactor[1];
+            return yaxis.d2l(y[col][row], 0, ycalendar);
         });
     } else {
         // ticks y
         fill(yc, function(row, col) {
-            return yaxis.d2l(y[col], 0, ycalendar) * scaleFactor[1];
+            return yaxis.d2l(y[col], 0, ycalendar);
         });
     }
 
@@ -280,14 +278,8 @@ proto.update = function(data) {
 
         coords.push(intensity);
     }
-    else {
-        // when 'z' is used as 'intensity',
-        // we must scale its value
-        params.intensityBounds[0] *= scaleFactor[2];
-        params.intensityBounds[1] *= scaleFactor[2];
-    }
 
-    this.dataScale = refine(coords);
+    refine(coords);
 
     if(data.surfacecolor) {
         params.intensity = coords.pop();

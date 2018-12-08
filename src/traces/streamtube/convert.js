@@ -28,12 +28,10 @@ var proto = Streamtube.prototype;
 
 proto.handlePick = function(selection) {
     var sceneLayout = this.scene.fullSceneLayout;
-    var dataScale = this.scene.dataScale;
 
     function fromDataScale(v, axisName) {
         var ax = sceneLayout[axisName];
-        var scale = dataScale[axisName2scaleIndex[axisName]];
-        return ax.l2c(v) / scale;
+        return ax.l2c(v);
     }
 
     if(selection.object === this.mesh) {
@@ -90,14 +88,12 @@ function getBoundPads(vec) {
 
 function convert(scene, trace) {
     var sceneLayout = scene.fullSceneLayout;
-    var dataScale = scene.dataScale;
     var len = trace._len;
     var tubeOpts = {};
 
     function toDataCoords(arr, axisName) {
         var ax = sceneLayout[axisName];
-        var scale = dataScale[axisName2scaleIndex[axisName]];
-        return Lib.simpleMap(arr, function(v) { return ax.d2l(v) * scale; });
+        return Lib.simpleMap(arr, function(v) { return ax.d2l(v); });
     }
 
     tubeOpts.vectors = zip3(

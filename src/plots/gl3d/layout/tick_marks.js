@@ -44,16 +44,16 @@ function computeTickMarks(scene) {
         var axes = sceneLayout[AXES_NAMES[i]];
 
         axes._length = (glRange[i].hi - glRange[i].lo) *
-            glRange[i].pixelsPerDataUnit / scene.dataScale[i];
+            glRange[i].pixelsPerDataUnit;
 
         if(Math.abs(axes._length) === Infinity ||
            isNaN(axes._length)) {
             ticks[i] = [];
         } else {
             axes._input_range = axes.range.slice();
-            axes.range[0] = (glRange[i].lo) / scene.dataScale[i];
-            axes.range[1] = (glRange[i].hi) / scene.dataScale[i];
-            axes._m = 1.0 / (scene.dataScale[i] * glRange[i].pixelsPerDataUnit);
+            axes.range[0] = (glRange[i].lo);
+            axes.range[1] = (glRange[i].hi);
+            axes._m = 1.0 / (glRange[i].pixelsPerDataUnit);
 
             if(axes.range[0] === axes.range[1]) {
                 axes.range[0] -= 1;
@@ -71,7 +71,7 @@ function computeTickMarks(scene) {
             }
             var dataTicks = Axes.calcTicks(axes);
             for(var j = 0; j < dataTicks.length; ++j) {
-                dataTicks[j].x = dataTicks[j].x * scene.dataScale[i];
+                dataTicks[j].x = dataTicks[j].x;
 
                 if(axes.type === 'date') {
                     dataTicks[j].text =

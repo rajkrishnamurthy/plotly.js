@@ -310,9 +310,6 @@ function Scene(options, fullLayout) {
     this.staticMode = !!options.staticPlot;
     this.pixelRatio = options.plotGlPixelRatio || 2;
 
-    // Coordinate rescaling
-    this.dataScale = [1, 1, 1];
-
     this.contourLevels = [ [], [], [] ];
 
     this.convertAnnotations = Registry.getComponentMethod('annotations3d', 'convert');
@@ -433,18 +430,6 @@ proto.plot = function(sceneData, fullLayout, layout) {
 
         computeTraceBounds(this, data, dataBounds);
     }
-    var dataScale = [1, 1, 1];
-    for(j = 0; j < 3; ++j) {
-        if(dataBounds[1][j] === dataBounds[0][j]) {
-            dataScale[j] = 1.0;
-        }
-        else {
-            dataScale[j] = 1.0 / (dataBounds[1][j] - dataBounds[0][j]);
-        }
-    }
-
-    // Save scale
-    this.dataScale = dataScale;
 
     // after computeTraceBounds where ax._categories are filled in
     this.convertAnnotations(this);
@@ -501,12 +486,11 @@ proto.plot = function(sceneData, fullLayout, layout) {
         axisType = axis.type;
 
         if(axisType in axisTypeRatios) {
-            axisTypeRatios[axisType].acc *= dataScale[i];
             axisTypeRatios[axisType].count += 1;
         }
         else {
             axisTypeRatios[axisType] = {
-                acc: dataScale[i],
+                acc: 1,
                 count: 1
             };
         }
@@ -527,9 +511,9 @@ proto.plot = function(sceneData, fullLayout, layout) {
                 if(obj.constructor.name === 'ErrorBars' && axis._lowerLogErrorBound) {
                     sceneBounds[0][i] = Math.min(sceneBounds[0][i], axis._lowerLogErrorBound);
                 } else {
-                    sceneBounds[0][i] = Math.min(sceneBounds[0][i], objBounds[0][i] / dataScale[i] - pad);
+                    sceneBounds[0][i] = Math.min(sceneBounds[0][i], objBounds[0][i] - pad);
                 }
-                sceneBounds[1][i] = Math.max(sceneBounds[1][i], objBounds[1][i] / dataScale[i] + pad);
+                sceneBounds[1][i] = Math.max(sceneBounds[1][i], objBounds[1][i] + pad);
             }
 
             for(j = 0; j < annotations.length; j++) {
@@ -574,8 +558,8 @@ proto.plot = function(sceneData, fullLayout, layout) {
         axisDataRange[i] = sceneBounds[1][i] - sceneBounds[0][i];
 
         // Update plot bounds
-        this.glplot.bounds[0][i] = sceneBounds[0][i] * dataScale[i];
-        this.glplot.bounds[1][i] = sceneBounds[1][i] * dataScale[i];
+        this.glplot.bounds[0][i] = sceneBounds[0][i];
+        this.glplot.bounds[1][i] = sceneBounds[1][i];
     }
 
     var axesScaleRatio = [1, 1, 1];
@@ -585,7 +569,7 @@ proto.plot = function(sceneData, fullLayout, layout) {
         axis = fullSceneLayout[axisProperties[i]];
         axisType = axis.type;
         var axisRatio = axisTypeRatios[axisType];
-        axesScaleRatio[i] = Math.pow(axisRatio.acc, 1.0 / axisRatio.count) / dataScale[i];
+        axesScaleRatio[i] = Math.pow(axisRatio.acc, 1.0 / axisRatio.count);
     }
 
     /*

@@ -209,7 +209,6 @@ function convertPlotlyOptions(scene, data) {
     var params, i,
         points = [],
         sceneLayout = scene.fullSceneLayout,
-        scaleFactor = scene.dataScale,
         xaxis = sceneLayout.xaxis,
         yaxis = sceneLayout.yaxis,
         zaxis = sceneLayout.zaxis,
@@ -227,9 +226,9 @@ function convertPlotlyOptions(scene, data) {
     // Convert points
     for(i = 0; i < len; i++) {
         // sanitize numbers and apply transforms based on axes.type
-        xc = xaxis.d2l(x[i], 0, xcalendar) * scaleFactor[0];
-        yc = yaxis.d2l(y[i], 0, ycalendar) * scaleFactor[1];
-        zc = zaxis.d2l(z[i], 0, zcalendar) * scaleFactor[2];
+        xc = xaxis.d2l(x[i], 0, xcalendar);
+        yc = yaxis.d2l(y[i], 0, ycalendar);
+        zc = zaxis.d2l(z[i], 0, zcalendar);
 
         points[i] = [xc, yc, zc];
     }
@@ -285,7 +284,7 @@ function convertPlotlyOptions(scene, data) {
         }
     }
 
-    params.errorBounds = calculateError(data, scaleFactor, sceneLayout);
+    params.errorBounds = calculateError(data, 1, sceneLayout);
 
     var errorParams = calculateErrorParams([data.error_x, data.error_y, data.error_z]);
     params.errorColor = errorParams.color;

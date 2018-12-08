@@ -57,13 +57,11 @@ var anchor2coneSpan = {tip: 1, tail: 1, cm: 0.75, center: 0.5};
 
 function convert(scene, trace) {
     var sceneLayout = scene.fullSceneLayout;
-    var dataScale = scene.dataScale;
     var coneOpts = {};
 
     function toDataCoords(arr, axisName) {
         var ax = sceneLayout[axisName];
-        var scale = dataScale[axisName2scaleIndex[axisName]];
-        return simpleMap(arr, function(v) { return ax.d2l(v) * scale; });
+        return simpleMap(arr, function(v) { return ax.d2l(v); });
     }
 
     coneOpts.vectors = zip3(
