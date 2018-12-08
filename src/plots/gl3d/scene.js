@@ -412,9 +412,6 @@ proto.plot = function(sceneData, fullLayout, layout) {
     this.setCamera(fullSceneLayout.camera);
     this.updateFx(fullSceneLayout.dragmode, fullSceneLayout.hovermode);
 
-    // Update scene
-    this.glplot.update({});
-
     // Update axes functions BEFORE updating traces
     this.setConvert(axis);
 
@@ -445,6 +442,9 @@ proto.plot = function(sceneData, fullLayout, layout) {
 
     // Save scale
     this.dataScale = dataScale;
+
+    // Update scene
+    this.glplot.update({});
 
     // after computeTraceBounds where ax._categories are filled in
     this.convertAnnotations(this);
