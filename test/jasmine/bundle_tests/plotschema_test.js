@@ -228,7 +228,7 @@ describe('plot schema', function() {
 
         assertPlotSchema(
             function(attr, attrName, attrs, level, attrString) {
-                if(attr && isPlainObject(attr[DEPRECATED])) {
+                if(attr && isPlainObject(attr[DEPRECATED]) && isValObject(attr[DEPRECATED])) {
                     Object.keys(attr[DEPRECATED]).forEach(function(dAttrName) {
                         var dAttr = attr[DEPRECATED][dAttrName];
 
@@ -362,6 +362,11 @@ describe('plot schema', function() {
         expect(typeof splomAttrs.yaxes.items.regex).toBe('string');
         expect(splomAttrs.yaxes.items.regex).toBe('/^y([2-9]|[1-9][0-9]+)?$/');
     });
+
+    it('should prune unsupported global-level trace attributes', function() {
+        expect(Plotly.PlotSchema.get().traces.sankey.attributes.hoverinfo.flags.length).toBe(0);
+    });
+
 });
 
 describe('getTraceValObject', function() {

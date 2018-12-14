@@ -13,11 +13,12 @@ var plotAttrs = require('../../plots/attributes');
 var colorAttrs = require('../../components/color/attributes');
 var fxAttrs = require('../../components/fx/attributes');
 var domainAttrs = require('../../plots/domain').attributes;
+var hovertemplateAttrs = require('../../components/fx/hovertemplate_attributes');
 
 var extendFlat = require('../../lib/extend').extendFlat;
 var overrideAll = require('../../plot_api/edit_types').overrideAll;
 
-module.exports = overrideAll({
+var attrs = module.exports = overrideAll({
     hoverinfo: extendFlat({}, plotAttrs.hoverinfo, {
         flags: [],
         arrayOk: false,
@@ -146,6 +147,10 @@ module.exports = overrideAll({
             ].join(' ')
         },
         hoverlabel: fxAttrs.hoverlabel, // needs editType override,
+        hovertemplate: hovertemplateAttrs({}, {
+            description: 'Variables `sourceLinks` and `targetLinks` are arrays of link objects.',
+            keys: ['value', 'label']
+        }),
         description: 'The nodes of the Sankey plot.'
     },
 
@@ -216,6 +221,11 @@ module.exports = overrideAll({
             ].join(' ')
         },
         hoverlabel: fxAttrs.hoverlabel, // needs editType override,
+        hovertemplate: hovertemplateAttrs({}, {
+            description: 'Variables `source` and `target` are node objects.',
+            keys: ['value', 'label']
+        }),
         description: 'The links of the Sankey plot.'
     }
 }, 'calc', 'nested');
+attrs.transforms = undefined;
