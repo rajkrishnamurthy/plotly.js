@@ -23,5 +23,17 @@ module.exports = function calc(gd, trace) {
     }
 
     trace._vMax = vMax;
-    colorscaleCalc(trace, [vMin, vMax], '', 'c');
+    if(trace.surfacecolor) {
+        colorscaleCalc(gd, trace, {
+            vals: trace.surfacecolor,
+            containerStr: '',
+            cLetter: 'c'
+        });
+    } else {
+        colorscaleCalc(gd, trace, {
+            vals: [vMin, vMax],
+            containerStr: '',
+            cLetter: 'c'
+        });
+    }
 };
