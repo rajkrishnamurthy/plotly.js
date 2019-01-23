@@ -10,6 +10,7 @@
 
 var c = require('./constants');
 var d3 = require('d3');
+var sum = require('d3-array').sum;
 var tinycolor = require('tinycolor2');
 var Color = require('../../components/color');
 var Drawing = require('../../components/drawing');
@@ -67,6 +68,24 @@ function sankeyModel(layout, d, traceIndex) {
         Lib.warn('node.pad was reduced to ', sankey.nodePadding(), ' to fit within the figure.');
     }
 
+    function computeLinkConcentrations() {
+        graph.nodes.forEach(function(node) {
+            var totalOutflow = sum(node.sourceLinks, function(n) {
+                return n.value;
+            });
+            node.sourceLinks.forEach(function(link) {
+                link.outConcentration = link.value / totalOutflow;
+            });
+            var totalInflow = sum(node.targetLinks, function(n) {
+                return n.value;
+            });
+            node.targetLinks.forEach(function(link) {
+                link.inConcentration = link.value / totalInflow;
+            });
+        });
+    }
+    computeLinkConcentrations();
+
     return {
         circular: circular,
         key: traceIndex,
@@ -121,7 +140,9 @@ function linkModel(d, l, i) {
         valueSuffix: d.valueSuffix,
         sankey: d.sankey,
         parent: d,
-        interactionState: d.interactionState
+        interactionState: d.interactionState,
+        inConcentration: l.inConcentration,
+        outConcentration: l.outConcentration
     };
 }
 
@@ -271,6 +292,27 @@ function linkPath() {
         }
     }
     return path;
+}
+
+function linkColor(s, gd) {
+    if(s.size()) {
+        s.each(function(d, i) {
+            var gradientID = 'linkfill-' + i;
+
+            console.log(d)
+            var startColor = tinycolor(d.link.source.color);
+            startColor.setAlpha(d.inConcentration);
+
+            var endColor = tinycolor(d.link.target.color);
+            endColor.setAlpha(d.outConcentration);
+
+            var colorRange = [startColor, endColor];
+            if(d.link.circular) colorRange = colorRange.reverse()
+
+            var colorscale = [[0, colorRange[0].toRgb()], [1, colorRange[1].toRgb()]];
+            Drawing.gradient(d3.select(this), gd, gradientID, 'horizontalreversed', colorscale, 'fill');
+        });
+    }
 }
 
 function nodeModel(d, n, i) {
@@ -568,7 +610,7 @@ function switchToSankeyFormat(nodes) {
 }
 
 // scene graph
-module.exports = function(svg, calcData, layout, callbacks) {
+module.exports = function(gd, svg, calcData, layout, callbacks) {
 
     var styledData = calcData
             .filter(function(d) {return unwrap(d).trace.visible;})
@@ -616,6 +658,7 @@ module.exports = function(svg, calcData, layout, callbacks) {
           .attr('d', linkPath())
           .call(attachPointerEvents, sankey, callbacks.linkEvents);
 
+
     sankeyLink
         .style('stroke', function(d) {
             return salientEnough(d) ? Color.tinyRGB(tinycolor(d.linkLineColor)) : d.tinyColorHue;
@@ -632,6 +675,9 @@ module.exports = function(svg, calcData, layout, callbacks) {
         .style('stroke-width', function(d) {
             return salientEnough(d) ? d.linkLineWidth : 1;
         });
+
+    // Color logic based on concentration
+    sankeyLink.call(linkColor, gd);
 
     sankeyLink.transition()
        .ease(c.ease).duration(c.duration)
