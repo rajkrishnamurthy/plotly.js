@@ -1963,20 +1963,25 @@ function addAxRangeSequence(seq, rangesAltered) {
         function(gd) {
             var axIds = [];
             var skipTitle = true;
+            var matchGroups = gd._fullLayout._axisMatchGroups || [];
 
             for(var id in rangesAltered) {
                 var ax = Axes.getFromId(gd, id);
-
                 axIds.push(id);
-                if(ax._matchingAxes) {
-                    for(var i = 0; i < ax._matchingAxes.length; i++) {
-                        axIds.push(Axes.name2id(ax._matchingAxes[i]));
+
+                for(var i = 0; i < matchGroups.length; i++) {
+                    var group = matchGroups[i];
+                    if(group[id]) {
+                        for(var id2 in group) {
+                            if(!rangesAltered[id2]) {
+                                // TODO can one ax be in two matching groups?
+                                axIds.push(id2);
+                            }
+                        }
                     }
                 }
 
-                if(ax.automargin) {
-                    skipTitle = false;
-                }
+                if(ax.automargin) skipTitle = false;
             }
 
             return Axes.draw(gd, axIds, {skipTitle: skipTitle});

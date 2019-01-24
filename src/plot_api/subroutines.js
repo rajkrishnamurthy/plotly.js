@@ -699,43 +699,40 @@ exports.redrawReglTraces = function(gd) {
 exports.doAutoRangeAndConstraints = function(gd) {
     var fullLayout = gd._fullLayout;
     var axList = Axes.list(gd, '', true);
-    var i, j, ax, ax2;
+    var matchGroups = fullLayout._axisMatchGroups || [];
+    var ax;
 
-    for(i = 0; i < axList.length; i++) {
+    for(var i = 0; i < axList.length; i++) {
         ax = axList[i];
         cleanAxisConstraints(gd, ax);
         doAutoRange(gd, ax);
     }
 
-    for(i = 0; i < axList.length; i++) {
-        ax = axList[i];
+    // TODO bypass this when matching axes aren't autoranged?
+    for(var j = 0; j < matchGroups.length; j++) {
+        var group = matchGroups[j];
+        var id, rng;
 
-        if(ax._matchingAxes) {
-            var matchingAxes = ax._matchingAxes;
-            var rng0 = ax.range[0];
-            var rng1 = ax.range[1];
+        for(id in group) {
+            ax = Axes.getFromId(gd, id);
 
-            for(j = 0; j < matchingAxes.length; j++) {
-                ax2 = fullLayout[matchingAxes[j]];
-                var rng = ax2.range;
-
-                if(rng0 < rng1) {
-                    rng0 = Math.min(rng0, rng[0]);
-                    rng1 = Math.max(rng1, rng[1]);
+            if(rng) {
+                if(rng[0] < rng[1]) {
+                    rng[0] = Math.min(rng[0], ax.range[0]);
+                    rng[1] = Math.max(rng[1], ax.range[1]);
                 } else {
-                    rng0 = Math.max(rng0, rng[0]);
-                    rng1 = Math.min(rng1, rng[1]);
+                    rng[0] = Math.max(rng[0], ax.range[0]);
+                    rng[1] = Math.min(rng[1], ax.range[1]);
                 }
+            } else {
+                rng = ax.range.slice();
             }
+        }
 
-            ax.range = [rng0, rng1];
-            ax.setScale();
-
-            for(j = 0; j < matchingAxes.length; j++) {
-                ax2 = fullLayout[matchingAxes[j]];
-                ax2.range = [rng0, rng1];
-                ax2.setScale();
-            }
+        for(id in group) {
+            ax = Axes.getFromId(gd, id);
+            ax.range = rng.slice();
+            ax.setScale(0);
         }
     }
 

@@ -391,6 +391,7 @@ module.exports = function setConvert(ax, fullLayout) {
         dflt = dflt.slice();
 
         // TODO handle matching axis range here?
+        // TODO if so, use _axisMatchGroups (to be more general) !!
         if(ax.matches) {
             var matchingAx = fullLayout[axisIds.id2name(ax.matches)];
             ax.autorange = matchingAx.autorange;

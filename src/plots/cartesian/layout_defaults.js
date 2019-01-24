@@ -124,6 +124,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
     }
 
     var counterAxes = {x: getCounterAxes('x'), y: getCounterAxes('y')};
+    var allAxisIds = counterAxes.x.concat(counterAxes.y);
 
     function getOverlayableAxes(axLetter, axName) {
         var list = (axLetter === 'x') ? xNames : yNames;
@@ -140,9 +141,6 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         return out;
     }
 
-    var axisMatchGroups = layoutOut._axisMatchGroups = [];
-    var existingMatches = {};
-
     // first pass creates the containers, determines types, and handles most of the settings
     for(i = 0; i < axNames.length; i++) {
         axName = axNames[i];
@@ -157,7 +155,6 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
 
         var traces = ax2traces[axName] || [];
         axLayoutOut._traceIndices = traces.map(function(t) { return t._expandedIndex; });
-        axLayoutOut._matchingAxes = [];
         axLayoutOut._annIndices = [];
         axLayoutOut._shapeIndices = [];
         axLayoutOut._imgIndices = [];
@@ -210,28 +207,6 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
             grid: layoutOut.grid
         });
 
-        var match = Lib.coerce(axLayoutIn, axLayoutOut, {
-            matches: {
-                valType: 'enumerated',
-                // TODO maybe filter out axes with 'matches'?
-                values: {x: xIds, y: yIds}[axLetter]
-            }
-        }, 'matches');
-
-        if(match) {
-            if(existingMatches[match]) {
-                axisMatchGroups[existingMatches[match] - 1][id] = 1;
-            } else {
-                var group = {};
-                group[id] = 1;
-                group[match] = 1;
-                axisMatchGroups.push(group);
-                existingMatches[match] = axisMatchGroups.length;
-            }
-
-            layoutOut[id2name(match)]._matchingAxes.push(axName);
-        }
-
         axLayoutOut._input = axLayoutIn;
     }
 
@@ -271,14 +246,17 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         coerce('fixedrange', fixedRangeDflt);
     }
 
-    // Finally, handle scale constraints. We need to do this after all axes have
-    // coerced both `type` (so we link only axes of the same type) and
+    // Finally, handle scale constraints and matching axes.
+    //
+    // We need to do this after all axes have coerced both `type`
+    // (so we link only axes of the same type) and
     // `fixedrange` (so we can avoid linking from OR TO a fixed axis).
 
     // sets of axes linked by `scaleanchor` along with the scaleratios compounded
     // together, populated in handleConstraintDefaults
     layoutOut._axisConstraintGroups = [];
-    var allAxisIds = counterAxes.x.concat(counterAxes.y);
+    // similar to _axisConstraintGroups, but for matching axes
+    layoutOut._axisMatchGroups = [];
 
     for(i = 0; i < axNames.length; i++) {
         axName = axNames[i];
