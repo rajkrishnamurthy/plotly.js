@@ -699,28 +699,47 @@ exports.redrawReglTraces = function(gd) {
 exports.doAutoRangeAndConstraints = function(gd) {
     var fullLayout = gd._fullLayout;
     var axList = Axes.list(gd, '', true);
-    var i, ax;
+    var i, j, ax, ax2;
 
     for(i = 0; i < axList.length; i++) {
         ax = axList[i];
         cleanAxisConstraints(gd, ax);
-
-        // in case margins changed, update scale
-        ax.setScale();
         doAutoRange(gd, ax);
     }
 
     for(i = 0; i < axList.length; i++) {
         ax = axList[i];
 
-        if(ax.matches) {
-            var matchingAx = fullLayout[Axes.id2name(ax.matches)];
-            ax.range = matchingAx.range.slice();
+        if(ax._matchingAxes) {
+            var matchingAxes = ax._matchingAxes;
+            var rng0 = ax.range[0];
+            var rng1 = ax.range[1];
+
+            for(j = 0; j < matchingAxes.length; j++) {
+                ax2 = fullLayout[matchingAxes[j]];
+                var rng = ax2.range;
+
+                if(rng0 < rng1) {
+                    rng0 = Math.min(rng0, rng[0]);
+                    rng1 = Math.max(rng1, rng[1]);
+                } else {
+                    rng0 = Math.max(rng0, rng[0]);
+                    rng1 = Math.min(rng1, rng[1]);
+                }
+            }
+
+            ax.range = [rng0, rng1];
             ax.setScale();
-            console.log(ax._id, ax.matches, ax.range)
+
+            for(j = 0; j < matchingAxes.length; j++) {
+                ax2 = fullLayout[matchingAxes[j]];
+                ax2.range = [rng0, rng1];
+                ax2.setScale();
+            }
         }
     }
 
+    // TODO before or after matching axes?
     enforceAxisConstraints(gd);
 };
 

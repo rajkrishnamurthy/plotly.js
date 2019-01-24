@@ -393,7 +393,8 @@ module.exports = function setConvert(ax, fullLayout) {
         // TODO handle matching axis range here?
         if(ax.matches) {
             var matchingAx = fullLayout[axisIds.id2name(ax.matches)];
-            Lib.nestedProperty(ax, rangeAttr).set(matchingAx.range.slice());
+            ax.autorange = matchingAx.autorange;
+            ax.range = matchingAx.range.slice();
         }
 
         if(!range || range.length !== 2) {

@@ -1961,7 +1961,6 @@ function addAxRangeSequence(seq, rangesAltered) {
     // executed after drawData
     var drawAxes = rangesAltered ?
         function(gd) {
-            var fullLayout = gd._fullLayout;
             var axIds = [];
             var skipTitle = true;
 
