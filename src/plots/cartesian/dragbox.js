@@ -755,6 +755,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
                 xa = sp.xaxis;
                 ya = sp.yaxis;
 
+                // TODO why not links.xaHash and links.yaHash
                 var editX2 = editX && !xa.fixedrange && xaHash[xa._id];
                 var editY2 = editY && !ya.fixedrange && yaHash[ya._id];
 
@@ -917,6 +918,8 @@ function zoomAxRanges(axList, r0Fraction, r1Fraction, updates, linkedAxes) {
         updates[axi._name + '.range[1]'] = axi.range[1];
     }
 
+    // TODO does not for matching axes!!
+    //
     // zoom linked axes about their centers
     if(linkedAxes && linkedAxes.length) {
         var linkedR0Fraction = (r0Fraction + (1 - r1Fraction)) / 2;
@@ -935,6 +938,8 @@ function dragAxList(axList, pix) {
             ];
         }
     }
+
+    // TODO should we drag matching axes here?
 }
 
 // common transform for dragging one end of an axis
@@ -1053,9 +1058,9 @@ function calcLinks(gd, xaHash, yaHash) {
     var isSubplotConstrained = false;
     var xLinks = {};
     var yLinks = {};
-    var xID, yID, xLinkID, yLinkID;
+    var xID, yID, xLinkID, yLinkID, xa, ya, i;
 
-    for(var i = 0; i < constraintGroups.length; i++) {
+    for(i = 0; i < constraintGroups.length; i++) {
         var group = constraintGroups[i];
         // check if any of the x axes we're dragging is in this constraint group
         for(xID in xaHash) {
@@ -1097,10 +1102,22 @@ function calcLinks(gd, xaHash, yaHash) {
         yLinks = {};
     }
 
+    for(xID in xaHash) {
+        xa = xaHash[xID];
+        if(xa._matchingAxes) {
+            for(i = 0; i < xa._matchingAxes.length; i++) {
+                xLinks[Axes.name2id(xa._matchingAxes[i])] = 1;
+                // xaHash[Axes.name2id(xa._matchingAxes[i])] = xa._matchingAxes[i];
+            }
+        }
+    }
+
+    // TODO y!
+
     var xaHashLinked = {};
     var xaxesLinked = [];
     for(xLinkID in xLinks) {
-        var xa = getFromId(gd, xLinkID);
+        xa = getFromId(gd, xLinkID);
         xaxesLinked.push(xa);
         xaHashLinked[xa._id] = xa;
     }
@@ -1108,7 +1125,7 @@ function calcLinks(gd, xaHash, yaHash) {
     var yaHashLinked = {};
     var yaxesLinked = [];
     for(yLinkID in yLinks) {
-        var ya = getFromId(gd, yLinkID);
+        ya = getFromId(gd, yLinkID);
         yaxesLinked.push(ya);
         yaHashLinked[ya._id] = ya;
     }
