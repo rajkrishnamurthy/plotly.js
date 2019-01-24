@@ -64,11 +64,27 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     handleHoverLabelDefaults(linkIn, linkOut, coerceLink, hoverlabelDefault);
     coerceLink('hovertemplate');
 
+    function distinct(value, index, self) {
+        return self.indexOf(value) === index;
+    }
+
     var defaultLinkColor = tinycolor(layout.paper_bgcolor).getLuminance() < 0.333 ?
                 'rgba(255, 255, 255, 0.6)' :
                 'rgba(0, 0, 0, 0.2)';
 
-    coerceLink('color', Lib.repeat(defaultLinkColor, linkOut.value.length));
+    if(linkOut.label.length === 0) {
+        coerceLink('color', Lib.repeat(defaultLinkColor, linkOut.value.length));
+    } else {
+        var distinctLabels = linkOut.label.filter(distinct);
+        var defaultLinkPalette = function(label) {
+            if(!label) return defaultLinkColor;
+            return colors[distinctLabels.indexOf(label) % colors.length];
+        };
+
+        coerceLink('color', linkOut.label.map(function(label) {
+            return defaultLinkPalette(label);
+        }));
+    }
 
     handleDomainDefaults(traceOut, layout, coerce);
 

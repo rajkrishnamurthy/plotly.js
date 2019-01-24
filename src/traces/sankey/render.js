@@ -70,17 +70,51 @@ function sankeyModel(layout, d, traceIndex) {
 
     function computeLinkConcentrations() {
         graph.nodes.forEach(function(node) {
+            // Group links targeting the same node into flows
+            var flows = {};
+            node.targetLinks.forEach(function(link) {
+                var targetPointNumber = link.target.pointNumber;
+                if(!flows.hasOwnProperty(targetPointNumber)) flows[targetPointNumber] = [];
+                flows[targetPointNumber].push(link);
+            });
+
+            // Compute statistics for each flow
+            Object.keys(flows).forEach(function(target) {
+                var flowLinks = flows[target];
+
+                // Find the total size of the flow + total size per label
+                var total = 0;
+                var totalPerLabel = {};
+                for(var i = 0; i < flowLinks.length; i++) {
+                    var link = flowLinks[i];
+                    if(!totalPerLabel[link.label]) totalPerLabel[link.label] = 0;
+                    totalPerLabel[link.label] += link.value;
+                    total += link.value;
+                }
+
+                // Find the ratio of the link's value and the size of the flow
+                flowLinks.forEach(function(link) {
+                    link.flow = {
+                        value: total,
+                        labelConcentration: totalPerLabel[link.label] / total,
+                        concentration: link.value / total,
+                        links: flowLinks
+                    };
+                });
+            });
+
+            // Gather statistics of all links at current node
             var totalOutflow = sum(node.sourceLinks, function(n) {
                 return n.value;
             });
             node.sourceLinks.forEach(function(link) {
-                link.outConcentration = link.value / totalOutflow;
+                link.concentrationOut = link.value / totalOutflow;
             });
             var totalInflow = sum(node.targetLinks, function(n) {
                 return n.value;
             });
             node.targetLinks.forEach(function(link) {
-                link.inConcentration = link.value / totalInflow;
+                link.concenrationIn = link.value / totalInflow;
             });
         });
     }
@@ -141,8 +175,7 @@ function linkModel(d, l, i) {
         sankey: d.sankey,
         parent: d,
         interactionState: d.interactionState,
-        inConcentration: l.inConcentration,
-        outConcentration: l.outConcentration
+        flow: l.flow
     };
 }
 
@@ -294,26 +327,25 @@ function linkPath() {
     return path;
 }
 
-function linkColor(s, gd) {
-    if(s.size()) {
-        s.each(function(d, i) {
-            var gradientID = 'linkfill-' + i;
-
-            console.log(d)
-            var startColor = tinycolor(d.link.source.color);
-            startColor.setAlpha(d.inConcentration);
-
-            var endColor = tinycolor(d.link.target.color);
-            endColor.setAlpha(d.outConcentration);
-
-            var colorRange = [startColor, endColor];
-            if(d.link.circular) colorRange = colorRange.reverse()
-
-            var colorscale = [[0, colorRange[0].toRgb()], [1, colorRange[1].toRgb()]];
-            Drawing.gradient(d3.select(this), gd, gradientID, 'horizontalreversed', colorscale, 'fill');
-        });
-    }
-}
+// function linkGradientFill(s, gd) {
+//     if(s.size()) {
+//         s.each(function(d, i) {
+//             var gradientID = 'linkfill-' + i;
+//
+//             var startColor = tinycolor(d.link.source.color);
+//             startColor.setAlpha(d.concentrationIn);
+//
+//             var endColor = tinycolor(d.link.target.color);
+//             endColor.setAlpha(d.concentrationOut);
+//
+//             var colorRange = [startColor, endColor];
+//             if(d.link.circular) colorRange = colorRange.reverse();
+//
+//             var colorscale = [[0, colorRange[0].toRgb()], [1, colorRange[1].toRgb()]];
+//             Drawing.gradient(d3.select(this), gd, gradientID, 'horizontalreversed', colorscale, 'fill');
+//         });
+//     }
+// }
 
 function nodeModel(d, n, i) {
     var tc = tinycolor(n.color);
@@ -676,8 +708,8 @@ module.exports = function(gd, svg, calcData, layout, callbacks) {
             return salientEnough(d) ? d.linkLineWidth : 1;
         });
 
-    // Color logic based on concentration
-    sankeyLink.call(linkColor, gd);
+    // Color link with gradient
+    // sankeyLink.call(linkGradientFill, gd);
 
     sankeyLink.transition()
        .ease(c.ease).duration(c.duration)
