@@ -49,7 +49,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     }));
 
     // link attributes
-    var linkIn = traceIn.link;
+    var linkIn = traceIn.link || {};
     var linkOut = Template.newContainer(traceOut, 'link');
 
     function coerceLink(attr, dflt) {
