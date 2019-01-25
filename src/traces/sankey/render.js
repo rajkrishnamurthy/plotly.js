@@ -70,27 +70,26 @@ function sankeyModel(layout, d, traceIndex) {
 
     function computeLinkConcentrations() {
         graph.nodes.forEach(function(node) {
-            // Group links targeting the same node into flows
+            // Links connecting the same two nodes are part of a flow
             var flows = {};
             node.targetLinks.forEach(function(link) {
-                var targetPointNumber = link.target.pointNumber;
-                if(!flows.hasOwnProperty(targetPointNumber)) flows[targetPointNumber] = [];
-                flows[targetPointNumber].push(link);
+                var flowKey = link.source.pointNumber + ':' + link.target.pointNumber;
+                if(!flows.hasOwnProperty(flowKey)) flows[flowKey] = [];
+                flows[flowKey].push(link);
             });
 
             // Compute statistics for each flow
-            Object.keys(flows).forEach(function(target) {
-                var flowLinks = flows[target];
+            Object.keys(flows).forEach(function(flowKey) {
+                var flowLinks = flows[flowKey];
 
-                // Find the total size of the flow + total size per label
+                // Find the total size of the flow and total size per label
                 var total = 0;
                 var totalPerLabel = {};
-                for(var i = 0; i < flowLinks.length; i++) {
-                    var link = flowLinks[i];
+                flowLinks.forEach(function(link) {
                     if(!totalPerLabel[link.label]) totalPerLabel[link.label] = 0;
                     totalPerLabel[link.label] += link.value;
                     total += link.value;
-                }
+                });
 
                 // Find the ratio of the link's value and the size of the flow
                 flowLinks.forEach(function(link) {
