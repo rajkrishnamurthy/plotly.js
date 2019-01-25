@@ -153,6 +153,9 @@ function sankeyModel(layout, d, traceIndex) {
 
 function linkModel(d, l, i) {
     var tc = tinycolor(l.color);
+    if(l.concentrationscale) {
+        tc = tinycolor(l.concentrationscale(l.flow.labelConcentration));
+    }
     var basicKey = l.source.label + '|' + l.target.label;
     var key = basicKey + '__' + i;
 

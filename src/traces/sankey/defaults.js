@@ -15,6 +15,7 @@ var tinycolor = require('tinycolor2');
 var handleDomainDefaults = require('../../plots/domain').defaults;
 var handleHoverLabelDefaults = require('../../components/fx/hoverlabel_defaults');
 var Template = require('../../plot_api/plot_template');
+var handleArrayContainerDefaults = require('../../plots/array_container_defaults');
 
 module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout) {
     function coerce(attr, dflt) {
@@ -64,27 +65,16 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     handleHoverLabelDefaults(linkIn, linkOut, coerceLink, hoverlabelDefault);
     coerceLink('hovertemplate');
 
-    function distinct(value, index, self) {
-        return self.indexOf(value) === index;
-    }
-
     var defaultLinkColor = tinycolor(layout.paper_bgcolor).getLuminance() < 0.333 ?
                 'rgba(255, 255, 255, 0.6)' :
                 'rgba(0, 0, 0, 0.2)';
 
-    if(linkOut.label.length === 0) {
-        coerceLink('color', Lib.repeat(defaultLinkColor, linkOut.value.length));
-    } else {
-        var distinctLabels = linkOut.label.filter(distinct);
-        var defaultLinkPalette = function(label) {
-            if(!label) return defaultLinkColor;
-            return colors[distinctLabels.indexOf(label) % colors.length];
-        };
+    coerceLink('color', Lib.repeat(defaultLinkColor, linkOut.value.length));
 
-        coerceLink('color', linkOut.label.map(function(label) {
-            return defaultLinkPalette(label);
-        }));
-    }
+    handleArrayContainerDefaults(linkIn, linkOut, {
+        name: 'colorscales',
+        handleItemDefaults: concentrationscalesDefaults
+    });
 
     handleDomainDefaults(traceOut, layout, coerce);
 
@@ -99,3 +89,14 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     // don't match, between nodes and links
     traceOut._length = null;
 };
+
+function concentrationscalesDefaults(In, Out) {
+    function coerce(attr, dflt) {
+        return Lib.coerce(In, Out, attributes.link.colorscales, attr, dflt);
+    }
+
+    coerce('label');
+    coerce('cmin');
+    coerce('cmax');
+    coerce('colorscale');
+}

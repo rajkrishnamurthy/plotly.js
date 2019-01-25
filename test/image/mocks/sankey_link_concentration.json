@@ -44,6 +44,23 @@
                     "color": "white",
                     "width": 2
                 },
+                "colorscales": [
+                  {
+                    "label": "elementA",
+                    "colorscale": [[0, "white"], [1, "blue"]]
+                  },
+                  {
+                    "label": "elementB",
+                    "colorscale": [[0, "white"], [1, "red"]]
+                  },
+                  {
+                    "label": "elementC",
+                    "colorscale": [[0, "white"], [1, "green"]]
+                  },
+                  {
+                    "label": "elementD"
+                  }
+                ],
 
                 "hovertemplate": "%{label}<br><b>flow.labelConcentration</b>: %{flow.labelConcentration:0.2f}<br><b>flow.concentration</b>: %{flow.concentration:%0.2f}<br><b>flow.value</b>: %{flow.value}"
             }
