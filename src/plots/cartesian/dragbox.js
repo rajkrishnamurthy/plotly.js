@@ -476,6 +476,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             for(i = 0; i < xaxes.length; i++) {
                 zoomWheelOneAxis(xaxes[i], xfrac, zoom);
             }
+            updateMatchedAxes(matches.xaxes, xaxes[0].range);
 
             scrollViewBox[2] *= zoom;
             scrollViewBox[0] += scrollViewBox[2] * xfrac * (1 / zoom - 1);
@@ -486,6 +487,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             for(i = 0; i < yaxes.length; i++) {
                 zoomWheelOneAxis(yaxes[i], yfrac, zoom);
             }
+            updateMatchedAxes(matches.yaxes, yaxes[0].range);
 
             scrollViewBox[3] *= zoom;
             scrollViewBox[1] += scrollViewBox[3] * (1 - yfrac) * (1 / zoom - 1);
@@ -596,12 +598,17 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             }
         }
 
+        updateMatchedAxes(matches.xaxes, xaxes[0].range);
+        updateMatchedAxes(matches.yaxes, yaxes[0].range);
+
         updateSubplots([x0, y0, pw - dx, ph - dy]);
         ticksAndAnnotations();
     }
 
     // Draw ticks and annotations (and other components) when ranges change.
     // Also records the ranges that have changed for use by update at the end.
+    //
+    // TODO rename! Better yet, merge into updateSubplots!!
     function ticksAndAnnotations() {
         var activeAxIds = [];
         var i;
@@ -728,10 +735,6 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         ], gd);
     }
 
-    // x/y scaleFactor stash,
-    // minimizes number of per-point DOM updates in updateSubplots below
-    var xScaleFactorOld, yScaleFactorOld;
-
     // updateSubplots - find all plot viewboxes that should be
     // affected by this drag, and update them. look for all plots
     // sharing an affected axis (including the one being dragged),
@@ -824,7 +827,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
                 // the scale of the trace group.
                 // apply only when scale changes, as adjusting the scale of
                 // all the points can be expansive.
-                if(xScaleFactor2 !== xScaleFactorOld || yScaleFactor2 !== yScaleFactorOld) {
+                if(xScaleFactor2 !== sp.xScaleFactor || yScaleFactor2 !== sp.yScaleFactor) {
                     Drawing.setPointGroupScale(sp.zoomScalePts, xScaleFactor2, yScaleFactor2);
                     Drawing.setTextPointsScale(sp.zoomScaleTxt, xScaleFactor2, yScaleFactor2);
                 }
@@ -832,8 +835,8 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
                 Drawing.hideOutsideRangePoints(sp.clipOnAxisFalseTraces, sp);
 
                 // update x/y scaleFactor stash
-                xScaleFactorOld = xScaleFactor2;
-                yScaleFactorOld = yScaleFactor2;
+                sp.xScaleFactor = xScaleFactor2;
+                sp.yScaleFactor = yScaleFactor2;
             }
         }
     }
@@ -939,9 +942,9 @@ function zoomAxRanges(axList, r0Fraction, r1Fraction, updates, linkedAxes, match
     }
 
     // zoom linked axes about their centers
-    if(linkedAxes && linkedAxes.length) {
+    if(linkedAxes.length) {
         var linkedR0Fraction = (r0Fraction + (1 - r1Fraction)) / 2;
-        zoomAxRanges(linkedAxes, linkedR0Fraction, 1 - linkedR0Fraction, updates);
+        zoomAxRanges(linkedAxes, linkedR0Fraction, 1 - linkedR0Fraction, updates, [], []);
     }
 
     // TODO is picking the first ax always ok in general?
@@ -967,12 +970,14 @@ function dragAxList(axList, matchedAxes, pix) {
         }
     }
 
+    updateMatchedAxes(matchedAxes, axList[0].range);
+}
+
+function updateMatchedAxes(matchedAxes, rng) {
     // TODO is picking the first ax always ok in general?
     // What if we're matching an overlaying axis?
-    var rng = axList[0].range;
-    for(i = 0; i < matchedAxes.length; i++) {
-        axi = matchedAxes[i];
-        axi.range = rng.slice();
+    for(var i = 0; i < matchedAxes.length; i++) {
+        matchedAxes[i].range = rng.slice();
     }
 }
 
