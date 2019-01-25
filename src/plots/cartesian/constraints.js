@@ -350,10 +350,6 @@ exports.clean = function cleanConstraints(gd, ax) {
     }
 };
 
-exports.gr = function() {
-
-};
-
 function updateDomain(ax, factor) {
     var inputDomain = ax._inputDomain;
     var centerFraction = FROM_BL[ax.constraintoward];

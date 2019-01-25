@@ -261,10 +261,31 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
     for(i = 0; i < axNames.length; i++) {
         axName = axNames[i];
         axLetter = axName.charAt(0);
-
         axLayoutIn = layoutIn[axName];
         axLayoutOut = layoutOut[axName];
 
         handleConstraintDefaults(axLayoutIn, axLayoutOut, coerce, allAxisIds, layoutOut);
+    }
+
+    // TODO or maybe a new step similar to Constraints.clean()
+
+    for(i = 0; i < layoutOut._axisMatchGroups.length; i++) {
+        var group = layoutOut._axisMatchGroups[i];
+        var axId, rng, autorange;
+
+        for(axId in group) {
+            axLayoutOut = layoutOut[id2name(axId)];
+            if(!axLayoutOut.matches) {
+                rng = axLayoutOut.range;
+                autorange = axLayoutOut.autorange;
+            }
+        }
+        for(axId in group) {
+            axLayoutOut = layoutOut[id2name(axId)];
+            if(axLayoutOut.matches) {
+                axLayoutOut.range = rng.slice();
+                axLayoutOut.autorange = autorange;
+            }
+        }
     }
 };
