@@ -62,12 +62,12 @@
                   }
                 ],
 
-                "hovertemplate": "%{label}<br><b>flow.labelConcentration</b>: %{flow.labelConcentration:0.2f}<br><b>flow.concentration</b>: %{flow.concentration:%0.2f}<br><b>flow.value</b>: %{flow.value}"
+                "hovertemplate": "%{label}<br><b>flow.labelConcentration</b>: %{flow.labelConcentration:%0.2f}<br><b>flow.concentration</b>: %{flow.concentration:%0.2f}<br><b>flow.value</b>: %{flow.value}"
             }
 
         }],
     "layout": {
-        "title": "Sankey with opacity equal to concentration within flow",
+        "title": "Sankey with links colored based on its concentration within a flow",
         "width": 800,
         "height": 800
     }
