@@ -1,9 +1,10 @@
 {
     "data": [{
-        "type": "isosurface",
-        "colorscale": "Blackbody",
-        "reversescale": true,
-        "opacity": 0.2,
+        "type": "volume4d",
+        "colorscale": [[ 0.0, "rgb(0,0,255)" ], [ 0.5, "rgb(0,0,0)" ], [ 0.75, "rgb(255,0,0)" ], [ 1.0, "rgb(255,255,0)" ]],
+        "reversescale": false,
+        "opacityscale": "max",
+        "opacity": 0.5,
         "surface": { "show": true, "fill": 1.0, "pattern": "all", "count": 33 },
         "spaceframe": { "show": true, "fill": 1.0 },
         "slices": {
@@ -2633,7 +2634,7 @@
     }],
     "layout": {
         "title": {
-            "text": "volume 3d displaying full data cube"
+            "text": "volume4d displaying above/below desired values"
         },
         "width": 1200,
         "height": 900,

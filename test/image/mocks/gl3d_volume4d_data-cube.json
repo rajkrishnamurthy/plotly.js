@@ -1,9 +1,10 @@
 {
     "data": [{
-        "type": "isosurface",
+        "type": "volume4d",
         "colorscale": "Blackbody",
         "reversescale": true,
-        "opacity": 0.2,
+        "opacityscale": "extremes",
+        "opacity": 0.5,
         "surface": { "show": true, "fill": 1.0, "pattern": "all", "count": 33 },
         "spaceframe": { "show": true, "fill": 1.0 },
         "slices": {
@@ -20,7 +21,7 @@
             "show": false,
             "width": 4
         },
-        "isomin": 250,
+        "isomin": null,
         "isomax": null,
         "value": [
 
@@ -2633,7 +2634,7 @@
     }],
     "layout": {
         "title": {
-            "text": "volume 3d displaying above/below desired values"
+            "text": "volume4d displaying full data cube"
         },
         "width": 1200,
         "height": 900,
