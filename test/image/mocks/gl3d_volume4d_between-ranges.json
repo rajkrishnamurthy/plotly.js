@@ -21,7 +21,7 @@
             "show": false,
             "width": 4
         },
-        "isomin": null,
+        "isomin": 250,
         "isomax": null,
         "value": [
 
