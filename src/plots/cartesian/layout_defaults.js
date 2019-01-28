@@ -267,11 +267,11 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
         handleConstraintDefaults(axLayoutIn, axLayoutOut, coerce, allAxisIds, layoutOut);
     }
 
-    // TODO or maybe a new step similar to Constraints.clean()
-
     for(i = 0; i < layoutOut._axisMatchGroups.length; i++) {
         var group = layoutOut._axisMatchGroups[i];
-        var axId, rng, autorange;
+        var rng = null;
+        var autorange = null;
+        var axId;
 
         for(axId in group) {
             axLayoutOut = layoutOut[id2name(axId)];
@@ -280,6 +280,16 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
                 autorange = axLayoutOut.autorange;
             }
         }
+
+        if(rng === null || autorange === null) {
+            for(axId in group) {
+                axLayoutOut = layoutOut[id2name(axId)];
+                rng = axLayoutOut.range;
+                autorange = axLayoutOut.autorange;
+                break;
+            }
+        }
+
         for(axId in group) {
             axLayoutOut = layoutOut[id2name(axId)];
             if(axLayoutOut.matches) {
