@@ -711,7 +711,8 @@ exports.doAutoRangeAndConstraints = function(gd) {
     // TODO bypass this when matching axes aren't autoranged?
     for(var j = 0; j < matchGroups.length; j++) {
         var group = matchGroups[j];
-        var id, rng;
+        var rng = null;
+        var id;
 
         for(id in group) {
             ax = Axes.getFromId(gd, id);
