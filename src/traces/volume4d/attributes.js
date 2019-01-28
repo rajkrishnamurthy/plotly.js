@@ -61,15 +61,7 @@ colorscaleAttrs('', {
 
     colorbar: isosurfaceAttrs.colorbar,
 
-    opacityscale: {
-        valType: 'enumerated',
-        values: ['min', 'max', 'extremes'],
-        dflt: false,
-        role: 'style',
-        description: [
-            'Enables different opacity scales depending on `value`.'
-        ].join(' ')
-    },
+    opacityscale: isosurfaceAttrs.opacityscale,
     opacity: isosurfaceAttrs.opacity,
     lightposition: isosurfaceAttrs.lightposition,
     lighting: isosurfaceAttrs.lighting,

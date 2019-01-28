@@ -97,6 +97,7 @@ proto.update = function(data) {
         vertexNormalsEpsilon: data.lighting.vertexnormalsepsilon,
         faceNormalsEpsilon: data.lighting.facenormalsepsilon,
         opacity: data.opacity,
+        opacityscale: data.opacityscale,
         contourEnable: data.contour.show,
         contourColor: str2RgbaArray(data.contour.color).slice(0, 3),
         contourWidth: data.contour.width,

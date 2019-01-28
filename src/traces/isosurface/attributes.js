@@ -235,6 +235,15 @@ colorscaleAttrs('', {
 
     colorbar: colorbarAttrs,
 
+    opacityscale: {
+        valType: 'enumerated',
+        values: ['min', 'max', 'extremes', 'center'],
+        dflt: false,
+        role: 'style',
+        description: [
+            'Enables non-uniform opacity scales between minimum and maximum ranges of `value`.'
+        ].join(' ')
+    },
     opacity: meshAttrs.opacity,
     lightposition: meshAttrs.lightposition,
     lighting: meshAttrs.lighting,
