@@ -83,8 +83,6 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
     // var activeAxes, activeAxIds;
     // are all axes in this subplot are fixed?
     var allFixedRanges;
-    // is subplot constrained?
-    var isSubplotConstrained;
     // do we need to edit x/y ranges?
     var editX, editY;
     // graph-wide optimization flags
@@ -132,9 +130,8 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
 
         links = calcLinks(gd, gd._fullLayout._axisConstraintGroups, xaHash, yaHash);
         matches = calcLinks(gd, gd._fullLayout._axisMatchGroups, xaHash, yaHash);
-        isSubplotConstrained = links.isSubplotConstrained;
-        editX = ew || isSubplotConstrained;
-        editY = ns || isSubplotConstrained;
+        editX = ew || links.isSubplotConstrained || matches.isSubplotConstrained;
+        editY = ns || links.isSubplotConstrained || matches.isSubplotConstrained;
 
         var fullLayout = gd._fullLayout;
         hasScatterGl = fullLayout._has('scattergl');
@@ -292,16 +289,22 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
 
     dragElement.init(dragOptions);
 
-    var x0,
-        y0,
-        box,
-        lum,
-        path0,
-        dimmed,
-        zoomMode,
-        zb,
-        corners;
-
+    // x/y px position at start of drag
+    var x0, y0;
+    // bbox object of the zoombox
+    var box;
+    // luminance of bg behind zoombox
+    var lum;
+    // zoombox path outline
+    var path0;
+    // is zoombox dimmed (during drag)
+    var dimmed;
+    // 'x'-only, 'y' or 'xy' zooming
+    var zoomMode;
+    // zoombox d3 selection
+    var zb;
+    // zoombox corner d3 selection
+    var corners;
     // zoom takes over minDrag, so it also has to take over gd._dragged
     var zoomDragged;
 
@@ -317,9 +320,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         dimmed = false;
         zoomMode = 'xy';
         zoomDragged = false;
-
         zb = makeZoombox(zoomlayer, lum, xs, ys, path0);
-
         corners = makeCorners(zoomlayer, xs, ys);
     }
 
@@ -345,22 +346,36 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             corners.attr('d', 'M0,0Z');
         }
 
-        if(isSubplotConstrained) {
+        if(links.isSubplotConstrained) {
             if(dx > MINZOOM || dy > MINZOOM) {
                 zoomMode = 'xy';
                 if(dx / pw > dy / ph) {
                     dy = dx * ph / pw;
                     if(y0 > y1) box.t = y0 - dy;
                     else box.b = y0 + dy;
-                }
-                else {
+                } else {
                     dx = dy * pw / ph;
                     if(x0 > x1) box.l = x0 - dx;
                     else box.r = x0 + dx;
                 }
                 corners.attr('d', xyCorners(box));
+            } else {
+                noZoom();
             }
-            else {
+        }
+        else if(matches.isSubplotConstrained) {
+            if(dx > MINZOOM || dy > MINZOOM) {
+                zoomMode = 'xy';
+
+                var r0 = Math.min(box.l / pw, (ph - box.b) / ph);
+                var r1 = Math.max(box.r / pw, (ph - box.t) / ph);
+
+                box.l = r0 * pw;
+                box.r = r1 * pw;
+                box.b = (1 - r0) * ph;
+                box.t = (1 - r1) * ph;
+                corners.attr('d', xyCorners(box));
+            } else {
                 noZoom();
             }
         }
@@ -476,7 +491,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             for(i = 0; i < xaxes.length; i++) {
                 zoomWheelOneAxis(xaxes[i], xfrac, zoom);
             }
-            updateMatchedAxes(matches.xaxes, xaxes[0].range);
+            updateMatchedAxes(matches.isSubplotConstrained ? yaxes : matches.xaxes, xaxes[0].range);
 
             scrollViewBox[2] *= zoom;
             scrollViewBox[0] += scrollViewBox[2] * xfrac * (1 / zoom - 1);
@@ -487,7 +502,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             for(i = 0; i < yaxes.length; i++) {
                 zoomWheelOneAxis(yaxes[i], yfrac, zoom);
             }
-            updateMatchedAxes(matches.yaxes, yaxes[0].range);
+            updateMatchedAxes(matches.isSubplotConstrained ? xaxes : matches.yaxes, yaxes[0].range);
 
             scrollViewBox[3] *= zoom;
             scrollViewBox[1] += scrollViewBox[3] * (1 - yfrac) * (1 / zoom - 1);
@@ -523,9 +538,19 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         // prevent axis drawing from monkeying with margins until we're done
         gd._fullLayout._replotting = true;
 
+        var matchedByXaxes;
+        var matchesByYaxes;
+        if(matches.isSubplotConstrained) {
+            matchedByXaxes = yaxes;
+            matchesByYaxes = xaxes;
+        } else {
+            matchedByXaxes = matches.xaxes;
+            matchesByYaxes = matches.yaxes;
+        }
+
         if(xActive === 'ew' || yActive === 'ns') {
-            if(xActive) dragAxList(xaxes, matches.xaxes, dx);
-            if(yActive) dragAxList(yaxes, matches.yaxes, dy);
+            if(xActive) dragAxList(xaxes, matchedByXaxes, dx);
+            if(yActive) dragAxList(yaxes, matchesByYaxes, dy);
             updateSubplots([xActive ? -dx : 0, yActive ? -dy : 0, pw, ph]);
             ticksAndAnnotations();
             return;
@@ -556,7 +581,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
                 (movedAx._rl[end] - movedAx._rl[otherEnd]);
         }
 
-        if(isSubplotConstrained && xActive && yActive) {
+        if(links.isSubplotConstrained && xActive && yActive) {
             // dragging a corner of a constrained subplot:
             // respect the fixed corner, but harmonize dx and dy
             var dxySign = ((xActive === 'w') === (yActive === 'n')) ? 1 : -1;
@@ -576,7 +601,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         var x0 = (xActive === 'w') ? dx : 0;
         var y0 = (yActive === 'n') ? dy : 0;
 
-        if(isSubplotConstrained) {
+        if(links.isSubplotConstrained) {
             var i;
             if(!xActive && yActive.length === 1) {
                 // dragging one end of the y axis of a constrained subplot
@@ -598,9 +623,8 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             }
         }
 
-        updateMatchedAxes(matches.xaxes, xaxes[0].range);
-        updateMatchedAxes(matches.yaxes, yaxes[0].range);
-
+        updateMatchedAxes(matchedByXaxes, xaxes[0].range);
+        updateMatchedAxes(matchesByYaxes, yaxes[0].range);
         updateSubplots([x0, y0, pw - dx, ph - dy]);
         ticksAndAnnotations();
     }
@@ -662,7 +686,6 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         // doubleClickConfig === 'reset' below), we reset.
         // If they are *all* at their initial ranges, then we autosize.
         if(doubleClickConfig === 'reset+autosize') {
-
             doubleClickConfig = 'autosize';
 
             for(i = 0; i < axList.length; i++) {
@@ -690,10 +713,10 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         else if(doubleClickConfig === 'reset') {
             // when we're resetting, reset all linked axes too, so we get back
             // to the fully-auto-with-constraints situation
-            if(xActive || isSubplotConstrained) axList = axList.concat(links.xaxes);
-            if(yActive && !isSubplotConstrained) axList = axList.concat(links.yaxes);
+            if(xActive || links.isSubplotConstrained) axList = axList.concat(links.xaxes);
+            if(yActive && !links.isSubplotConstrained) axList = axList.concat(links.yaxes);
 
-            if(isSubplotConstrained) {
+            if(links.isSubplotConstrained) {
                 if(!xActive) axList = axList.concat(xaxes);
                 else if(!yActive) axList = axList.concat(yaxes);
             }
@@ -852,7 +875,7 @@ function makeDragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         if(editX && (links.xaHash[id] || matches.xaHash[id])) {
             return xScaleFactor;
         }
-        if(editY && ((isSubplotConstrained ? links.xaHash : links.yaHash)[id] || matches.yaHash[id])) {
+        if(editY && ((links.isSubplotConstrained ? links.xaHash : links.yaHash)[id] || matches.yaHash[id])) {
             return yScaleFactor;
         }
         return 0;
