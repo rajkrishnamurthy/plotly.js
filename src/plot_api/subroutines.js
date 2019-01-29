@@ -726,13 +726,14 @@ exports.doAutoRangeAndConstraints = function(gd) {
                     rng[1] = Math.min(rng[1], ax.range[1]);
                 }
             } else {
-                rng = ax.range.slice();
+                rng = ax.range;
             }
         }
 
         for(id in group) {
             ax = Axes.getFromId(gd, id);
             ax.range = rng.slice();
+            ax._input.range = rng.slice();
             ax.setScale(0);
         }
     }
