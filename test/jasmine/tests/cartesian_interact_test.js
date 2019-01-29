@@ -2,6 +2,7 @@ var d3 = require('d3');
 
 var Plotly = require('@lib/index');
 var Lib = require('@src/lib');
+var Axes = require('@src/plots/cartesian/axes');
 var constants = require('@src/plots/cartesian/constants');
 
 var createGraphDiv = require('../assets/create_graph_div');
@@ -743,6 +744,298 @@ describe('axis zoom/pan and main plot zoom', function() {
         })
         .catch(failTest)
         .then(done);
+    });
+
+    describe('updates matching axes', function() {
+        var eventData;
+
+        function assertRanges(msg, exp) {
+            exp.forEach(function(expi) {
+                var axNames = expi[0];
+                var rng = expi[1];
+
+                axNames.forEach(function(n) {
+                    var msgi = n + ' - ' + msg;
+                    expect(gd.layout[n].range).toBeCloseToArray(rng, 2, msgi + ' |input');
+                    expect(gd._fullLayout[n].range).toBeCloseToArray(rng, 2, msgi + ' |full');
+                });
+            });
+        }
+
+        function assertEventData(msg, exp) {
+            if(eventData === null) {
+                return fail('plotly_relayout did not get triggered - ' + msg);
+            }
+
+            exp.forEach(function(expi) {
+                var axNames = expi[0];
+                var rng = expi[1];
+                var opts = expi[2] || {};
+
+                axNames.forEach(function(n) {
+                    var msgi = n + ' - ' + msg;
+                    if(opts.autorange) {
+                        expect(eventData[n + '.autorange']).toBe(true, 2, msgi + '|event data');
+                    } else if(!opts.noChange) {
+                        expect(eventData[n + '.range[0]']).toBeCloseTo(rng[0], 2, msgi + '|event data [0]');
+                        expect(eventData[n + '.range[1]']).toBeCloseTo(rng[1], 2, msgi + '|event data [1]');
+                    }
+                });
+            });
+
+            eventData = null;
+        }
+
+        function assertAxesDrawCalls(msg, exp) {
+            var cnt = 0;
+            exp.forEach(function(expi) {
+                var axNames = expi[0];
+                var opts = expi[2] || {};
+                axNames.forEach(function() {
+                    if(!opts.noChange) {
+                        cnt++;
+                        // called twice as many times on drag:
+                        // - once per axis during mousemouve
+                        // - once per raxis on mouseup
+                        if(opts.dragged) cnt++;
+                    }
+                });
+            });
+
+            expect(Axes.drawOne).toHaveBeenCalledTimes(cnt);
+            Axes.drawOne.calls.reset();
+        }
+
+        function _assert(msg, exp) {
+            return function() {
+                assertRanges(msg, exp);
+                assertEventData(msg, exp);
+                assertAxesDrawCalls(msg, exp);
+            };
+        }
+
+        describe('no-constrained subplot case', function() {
+            var data = [
+                { y: [1, 2, 1] },
+                { y: [2, 1, 2, 3], xaxis: 'x2' },
+                { y: [0, 1], xaxis: 'x3' }
+            ];
+
+            // N.B. ax._length are not equal here
+            var layout = {
+                xaxis: {domain: [0, 0.2]},
+                xaxis2: {matches: 'x', domain: [0.3, 0.6]},
+                xaxis3: {matches: 'x', domain: [0.65, 1]},
+                yaxis: {},
+                width: 800,
+                height: 500,
+                dragmode: 'zoom'
+            };
+
+            var xr0 = [-0.245, 3.245];
+            var yr0 = [-0.211, 3.211];
+
+            var specs = [{
+                desc: 'zoombox on xy',
+                drag: ['xy', 'nsew', 30, 30],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [1.494, 2.350]],
+                    [['yaxis'], [1.179, 1.50]]
+                ],
+                dblclickSubplot: 'xy'
+            }, {
+                desc: 'x-only zoombox on xy',
+                drag: ['xy', 'nsew', 30, 0],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [1.494, 2.350]],
+                    [['yaxis'], yr0, {noChange: true}]
+                ],
+                dblclickSubplot: 'x2y'
+            }, {
+                desc: 'y-only zoombox on xy',
+                drag: ['xy', 'nsew', 0, 30],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], xr0, {noChange: true}],
+                    [['yaxis'], [1.179, 1.50]]
+                ],
+                dblclickSubplot: 'x3y'
+            }, {
+                desc: 'zoombox on x2y',
+                drag: ['x2y', 'nsew', 30, 30],
+                exp: [
+                    // N.B. slightly different range result
+                    // due difference in ax._length
+                    [['xaxis', 'xaxis2', 'xaxis3'], [1.492, 2.062]],
+                    [['yaxis'], [1.179, 1.50]]
+                ],
+                dblclickSubplot: 'x3y'
+            }, {
+                desc: 'zoombox on x3y',
+                drag: ['x3y', 'nsew', 30, 30],
+                exp: [
+                    // Similarly here slightly different range result
+                    // due difference in ax._length
+                    [['xaxis', 'xaxis2', 'xaxis3'], [1.485, 1.974]],
+                    [['yaxis'], [1.179, 1.50]]
+                ],
+                dblclickSubplot: 'xy'
+            }, {
+                desc: 'drag ew on x2y',
+                drag: ['x2y', 'ew', 30, 0],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-0.816, 2.675], {dragged: true}],
+                    [['yaxis'], yr0, {noChange: true}]
+                ],
+                dblclickSubplot: 'x3y'
+            }, {
+                desc: 'drag ew on x3y',
+                drag: ['x3y', 'ew', 30, 0],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-0.734, 2.756], {dragged: true}],
+                    [['yaxis'], yr0, {noChange: true}]
+                ],
+                dblclickSubplot: 'xy'
+            }, {
+                desc: 'drag e on xy',
+                drag: ['xy', 'e', 30, 30],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [xr0[0], 1.366], {dragged: true}],
+                    [['yaxis'], yr0, {noChange: true}]
+                ],
+                dblclickSubplot: 'x3y'
+            }, {
+                desc: 'drag nw on x3y',
+                drag: ['xy', 'nw', 30, 30],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-1.379, 3.245], {dragged: true}],
+                    [['yaxis'], [-0.211, 3.565], {dragged: true}]
+                ],
+                dblclickSubplot: 'x3y'
+            }, {
+                desc: 'panning on xy subplot',
+                dragmode: 'pan',
+                drag: ['xy', 'nsew', 30, 30],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-1.101, 2.390], {dragged: true}],
+                    [['yaxis'], [0.109, 3.532], {dragged: true}]
+                ],
+                dblclickSubplot: 'x3y'
+            }, {
+                desc: 'panning on x2y subplot',
+                dragmode: 'pan',
+                drag: ['x2y', 'nsew', 30, 30],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-0.816, 2.675], {dragged: true}],
+                    [['yaxis'], [0.109, 3.532], {dragged: true}]
+                ],
+                dblclickSubplot: 'x2y'
+            }, {
+                desc: 'panning on x3y subplot',
+                dragmode: 'pan',
+                drag: ['x3y', 'nsew', 30, 30],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-0.734, 2.756], {dragged: true}],
+                    [['yaxis'], [0.109, 3.532], {dragged: true}]
+                ],
+                dblclickSubplot: 'xy'
+            }, {
+                desc: 'scrolling on x3y subplot',
+                scroll: ['x3y', 20],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-0.613, 3.245], {dragged: true}],
+                    [['yaxis'], [-0.211, 3.571], {dragged: true}]
+                ],
+                dblclickSubplot: 'xy'
+            }, {
+                desc: 'scrolling on x2y subplot',
+                scroll: ['x2y', 20],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-0.613, 3.245], {dragged: true}],
+                    [['yaxis'], [-0.211, 3.571], {dragged: true}]
+                ],
+                dblclickSubplot: 'xy'
+            }, {
+                desc: 'scrolling on xy subplot',
+                scroll: ['xy', 20],
+                exp: [
+                    [['xaxis', 'xaxis2', 'xaxis3'], [-0.613, 3.245], {dragged: true}],
+                    [['yaxis'], [-0.211, 3.571], {dragged: true}]
+                ],
+                dblclickSubplot: 'x2y'
+            }];
+
+            specs.forEach(function(s) {
+                var msg = 'after ' + s.desc;
+                var msg2 = ['after dblclick on subplot', s.dblclickSubplot, msg].join(' ');
+
+                it(s.desc, function(done) {
+                    spyOn(Axes, 'drawOne').and.callThrough();
+                    eventData = null;
+
+                    var fig = {};
+                    fig.data = data;
+                    fig.layout = Lib.extendDeep({}, layout, {dragmode: s.dragmode});
+                    fig.config = {scrollZoom: true};
+
+                    Plotly.plot(gd, fig).then(function() {
+                        assertRanges('base', [
+                            [['xaxis', 'xaxis2', 'xaxis3'], xr0],
+                            [['yaxis'], yr0]
+                        ]);
+
+                        Axes.drawOne.calls.reset();
+                        gd.on('plotly_relayout', function(d) { eventData = d; });
+                    })
+                    .then(function() {
+                        if(s.scroll) {
+                            var mainDrag = getDragger(s.scroll[0], 'nsew');
+                            var mainDragCoords = getNodeCoords(mainDrag, 'se');
+                            mouseEvent('scroll', mainDragCoords.x, mainDragCoords.y, {
+                                deltaY: s.scroll[1],
+                                element: mainDrag
+                            });
+                            return delay(constants.REDRAWDELAY + 10)();
+                        } else {
+                            return doDrag(s.drag[0], s.drag[1], s.drag[2], s.drag[3])();
+                        }
+                    })
+                    .then(_assert(msg, s.exp))
+                    .then(doDblClick(s.dblclickSubplot, 'nsew'))
+                    .then(_assert(msg2, [
+                        [['xaxis', 'xaxis2', 'xaxis3'], xr0, {autorange: true}],
+                        [['yaxis'], yr0, {autorange: true}]
+                    ]))
+                    .catch(failTest)
+                    .then(done);
+                });
+            });
+        });
+
+        describe('constrained subplot case', function() {
+            // var data = [
+            //     { y: [1, 2, 1] },
+            //     { y: [2, 1, 2, 3], xaxis: 'x2' },
+            //     { y: [0, 1], xaxis: 'x3' }
+            // ];
+
+            // // N.B. ax._length are not equal here
+            // var layout = {
+            //     xaxis: {domain: [0, 0.2]},
+            //     xaxis2: {matches: 'x', domain: [0.3, 0.6]},
+            //     xaxis3: {matches: 'x', domain: [0.65, 1]},
+            //     yaxis: {},
+            //     width: 800,
+            //     height: 500,
+            //     dragmode: 'zoom'
+            // };
+
+            // var xr0 = [];
+            // var yr0 = [];
+
+            // var specs = [{
+
+            // }];
+        });
     });
 });
 
