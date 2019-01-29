@@ -6,7 +6,6 @@
 * LICENSE file in the root directory of this source tree.
 */
 
-
 'use strict';
 
 var d3 = require('d3');
@@ -305,13 +304,11 @@ module.exports = function setConvert(ax, fullLayout) {
         };
 
         ax.setupMultiCategory = function(fullData) {
-            if(ax._multicatList) return;
-
             var traceIndices = ax._traceIndices;
             var i, j;
 
             var matchGroups = fullLayout._axisMatchGroups;
-            if(matchGroups && matchGroups.length) {
+            if(matchGroups && matchGroups.length && ax._categories.length === 0) {
                 for(i = 0; i < matchGroups.length; i++) {
                     var group = matchGroups[i];
                     if(group[axId]) {
@@ -328,7 +325,7 @@ module.exports = function setConvert(ax, fullLayout) {
             // [ [cnt, {$cat: index}], for 1,2 ]
             var seen = [[0, {}], [0, {}]];
             // [ [arrayIn[0][i], arrayIn[1][i]], for i .. N ]
-            var list = ax._multicatList = [];
+            var list = [];
 
             for(i = 0; i < traceIndices.length; i++) {
                 var trace = fullData[traceIndices[i]];
