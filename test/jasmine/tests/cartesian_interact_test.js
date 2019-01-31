@@ -747,6 +747,7 @@ describe('axis zoom/pan and main plot zoom', function() {
     });
 
     describe('updates matching axes', function() {
+        var TOL = 1.5;
         var eventData;
 
         function assertRanges(msg, exp) {
@@ -756,8 +757,8 @@ describe('axis zoom/pan and main plot zoom', function() {
 
                 axNames.forEach(function(n) {
                     var msgi = n + ' - ' + msg;
-                    expect(gd.layout[n].range).toBeCloseToArray(rng, 2, msgi + ' |input');
-                    expect(gd._fullLayout[n].range).toBeCloseToArray(rng, 2, msgi + ' |full');
+                    expect(gd.layout[n].range).toBeCloseToArray(rng, TOL, msgi + ' |input');
+                    expect(gd._fullLayout[n].range).toBeCloseToArray(rng, TOL, msgi + ' |full');
                 });
             });
         }
@@ -777,8 +778,8 @@ describe('axis zoom/pan and main plot zoom', function() {
                     if(opts.autorange) {
                         expect(eventData[n + '.autorange']).toBe(true, 2, msgi + '|event data');
                     } else if(!opts.noChange) {
-                        expect(eventData[n + '.range[0]']).toBeCloseTo(rng[0], 2, msgi + '|event data [0]');
-                        expect(eventData[n + '.range[1]']).toBeCloseTo(rng[1], 2, msgi + '|event data [1]');
+                        expect(eventData[n + '.range[0]']).toBeCloseTo(rng[0], TOL, msgi + '|event data [0]');
+                        expect(eventData[n + '.range[1]']).toBeCloseTo(rng[1], TOL, msgi + '|event data [1]');
                     }
                 });
             });
